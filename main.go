@@ -1,62 +1,67 @@
 package main
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/jezek/xgb"
 	"github.com/jezek/xgb/xproto"
 )
 
+var BarWindow xproto.Window
+var XGBConn *xgb.Conn
 var RuntimeFlag = true
 var CurrentKeyMask BitFlags
 
 func main() {
+	var err error
+
+	XGBConn, err = xgb.NewConn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer XGBConn.Close()
+
+	setup := xproto.Setup(XGBConn)
+	screen := setup.DefaultScreen(XGBConn)
+	root := screen.Root
+
+	BarWindow, _ = xproto.NewWindowId(XGBConn)
+	width := uint16(screen.WidthInPixels)
+	height := uint16(BarHeight)
+
+	xproto.CreateWindow(XGBConn, screen.RootDepth, BarWindow, root,
+		0, 0, width, height, 0,
+		xproto.WindowClassInputOutput, screen.RootVisual,
+		xproto.CwBackPixel|xproto.CwEventMask,
+		[]uint32{BarBackground, xproto.EventMaskExposure | xproto.EventMaskButtonPress})
+
+	xproto.ChangeWindowAttributes(XGBConn, BarWindow, xproto.CwEventMask,
+		[]uint32{xproto.EventMaskExposure | xproto.EventMaskButtonPress |
+			xproto.EventMaskKeyPress | xproto.EventMaskKeyRelease})
 
 	for i := 0; i < len(Hotkeys); i++ {
 		Hotkeys[i].InitMask()
 	}
+	xproto.GrabKeyboard(XGBConn, true, root,
+		xproto.TimeCurrentTime,
+		xproto.GrabModeAsync, xproto.GrabModeAsync)
 
-	conn, err := xgb.NewConn()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer conn.Close()
-
-	setup := xproto.Setup(conn)
-	screen := setup.DefaultScreen(conn)
-	root := screen.Root
-
-	win, _ := xproto.NewWindowId(conn)
-	width := uint16(screen.WidthInPixels)
-	height := uint16(screen.HeightInPixels / 20)
-
-	xproto.CreateWindow(conn, screen.RootDepth, win, root,
-		0, 0, width, height, 0,
-		xproto.WindowClassInputOutput, screen.RootVisual,
-		xproto.CwBackPixel|xproto.CwEventMask,
-		[]uint32{BarColor, xproto.EventMaskExposure})
-
-	//xproto.ChangeWindowAttributes(conn, root, xproto.CwEventMask,
-	//	[]uint32{xproto.EventMaskKeyPress | xproto.EventMaskKeyRelease})
-
-	//xproto.MapWindow(conn, win)
+	BarVisible = !BarVisible
+	ToggleBar(Args{})
 
 	for RuntimeFlag {
-		ev, err := conn.WaitForEvent()
+		ev, err := XGBConn.WaitForEvent()
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		switch e := ev.(type) {
-		case xproto.ExposeEvent:
-			gc, _ := xproto.NewGcontextId(conn)
-			xproto.CreateGC(conn, gc, xproto.Drawable(win), xproto.GcForeground, []uint32{BarColor})
-			xproto.PolyRectangle(conn, xproto.Drawable(win), gc, []xproto.Rectangle{
-				{X: 0, Y: 0, Width: width, Height: uint16(BarHeight)},
-			})
+		//case xproto.ExposeEvent:
+		//	fmt.Printf("Окно отрисовано")
 
 		case xproto.KeyPressEvent:
-			//fmt.Printf("Key pressed: keycode=%d\n", e.Detail)
+			fmt.Printf("Key pressed: keycode=%d\n", e.Detail)
 			// 00000001|10000000
 
 			CurrentKeyMask.Set(e.Detail)

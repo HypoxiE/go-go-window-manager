@@ -1,6 +1,10 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/jezek/xgb/xproto"
+)
 
 func SayHello(arg Args) {
 	fmt.Printf("Alt+Shift+Enter")
@@ -8,4 +12,14 @@ func SayHello(arg Args) {
 
 func Quit(arg Args) {
 	RuntimeFlag = false
+}
+
+func ToggleBar(arg Args) {
+	if BarVisible {
+		xproto.UnmapWindow(XGBConn, BarWindow)
+		BarVisible = false
+	} else {
+		xproto.MapWindow(XGBConn, BarWindow)
+		BarVisible = true
+	}
 }

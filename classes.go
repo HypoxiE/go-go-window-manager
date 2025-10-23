@@ -21,9 +21,11 @@ type Args struct {
 	Booleans []bool
 }
 
+/* bit flags (256bit) for hotkey */
 const flags_size = 4
 
-type BitFlags [flags_size]uint64 // 4 * 64 = 256
+type BitFlags [flags_size]uint64
+
 func (a BitFlags) And(b BitFlags) BitFlags {
 	var r BitFlags
 	for i := 0; i < flags_size; i++ {
