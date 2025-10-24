@@ -7,7 +7,7 @@ import (
 )
 
 func SayHello(arg Args) {
-	fmt.Printf("Alt+Shift+Enter")
+	fmt.Printf("Hello, %s", arg.Strings[0])
 }
 
 func Quit(arg Args) {

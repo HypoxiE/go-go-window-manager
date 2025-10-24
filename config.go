@@ -28,9 +28,10 @@ const MODMASK = xproto.ModMask1
 /*
  */
 var Hotkeys = []Hotkey{
-	{Modifier: MODMASK, Key: xkeys.XK_0, Action: SayHello, Arguments: Args{}},
+	{Modifier: MODMASK, Key: xkeys.XK_0, Action: SayHello, Arguments: Args{Strings: []string{"world"}}},
 	{Modifier: MODMASK, Key: xkeys.XK_q, Action: Quit, Arguments: Args{}},
 	{Modifier: MODMASK, Key: xkeys.XK_1, Action: ToggleBar, Arguments: Args{}},
+	{Key: xkeys.XK_7, Action: SayHello, Arguments: Args{}},
 	//{Key: 24, Modifiers: xproto.ModMask1, Action: func() { fmt.Println("Alt+Q") }},
 }
 
