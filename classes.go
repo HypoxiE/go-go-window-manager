@@ -1,10 +1,9 @@
 package main
 
-import "github.com/jezek/xgb/xproto"
-
 type Hotkey struct {
-	Modifier  uint16
-	Key       xproto.Keycode
+	//Modifier  uint16
+	//Key       string
+	Hotkey    string
 	Action    func(Args)
 	Arguments Args
 }

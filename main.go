@@ -3,61 +3,48 @@ package main
 import (
 	"log"
 
-	"github.com/jezek/xgb"
-	"github.com/jezek/xgb/xproto"
+	"github.com/BurntSushi/xgbutil"
+	"github.com/BurntSushi/xgbutil/keybind"
+	"github.com/BurntSushi/xgbutil/xevent"
 )
 
-var RuntimeFlag = true
-
-var masks = []uint16{
-	0,
-	xproto.ModMaskLock, // CapsLock
-	xproto.ModMask2,    // NumLock
-	xproto.ModMaskLock | xproto.ModMask2,
-}
+var XGBConn *xgbutil.XUtil
 
 func main() {
 	var err error
 
-	XGBConn, err = xgb.NewConn()
+	XGBConn, err = xgbutil.NewConn()
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer XGBConn.Close()
+	defer XGBConn.Conn().Close()
 
-	setup := xproto.Setup(XGBConn)
-	screen := setup.DefaultScreen(XGBConn)
-	root := screen.Root
+	keybind.Initialize(XGBConn)
 
-	DrawBar()
-	DrawCursor()
+	//setup := xproto.Setup(XGBConn)
+	//screen := setup.DefaultScreen(XGBConn)
+	//root := screen.Root
+
+	//DrawBar()
+	//DrawCursor()
+	//DrawTags(3)
 
 	for _, hk := range Hotkeys {
-		for _, m := range masks {
-			xproto.GrabKey(XGBConn, false, root, hk.Modifier|m, hk.Key, xproto.GrabModeAsync, xproto.GrabModeAsync)
-		}
-	}
-
-	for RuntimeFlag {
-		ev, err := XGBConn.WaitForEvent()
+		mods, keys, err := keybind.ParseString(XGBConn, hk.Hotkey)
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		switch e := ev.(type) {
-		//case xproto.ExposeEvent:
-		//	fmt.Printf("Окно отрисовано")
+		for _, key := range keys {
+			keybind.Grab(XGBConn, XGBConn.RootWin(), mods, key)
 
-		case xproto.KeyPressEvent:
-			//fmt.Printf("Key pressed: keycode=%d\n", e.Detail)
-
-			for _, hk := range Hotkeys {
-				if hk.Key == 0 && e.State&hk.Modifier == hk.Modifier {
-					hk.Action(hk.Arguments)
-				} else if e.Detail == xproto.Keycode(hk.Key) && e.State&hk.Modifier == hk.Modifier {
+			xevent.KeyPressFun(func(X *xgbutil.XUtil, ev xevent.KeyPressEvent) {
+				if ev.Detail == key && ev.State&mods == mods {
 					hk.Action(hk.Arguments)
 				}
-			}
+			}).Connect(XGBConn, XGBConn.RootWin())
 		}
 	}
+
+	xevent.Main(XGBConn)
 }

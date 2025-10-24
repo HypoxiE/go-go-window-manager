@@ -2,24 +2,26 @@ package main
 
 import (
 	"fmt"
-
-	"github.com/jezek/xgb/xproto"
 )
 
 func SayHello(arg Args) {
-	fmt.Printf("Hello, %s", arg.Strings[0])
+	if len(arg.Strings) != 1 {
+		fmt.Printf("Hello, !\n")
+	} else {
+		fmt.Printf("Hello, %s!\n", arg.Strings[0])
+	}
 }
 
 func Quit(arg Args) {
-	RuntimeFlag = false
+	XGBConn.Quit = true
 }
 
-func ToggleBar(arg Args) {
-	if BarVisible {
-		xproto.UnmapWindow(XGBConn, BarWindow)
-		BarVisible = false
-	} else {
-		xproto.MapWindow(XGBConn, BarWindow)
-		BarVisible = true
-	}
-}
+//func ToggleBar(arg Args) {
+//	if BarVisible {
+//		xproto.UnmapWindow(XGBConn, BarWindow)
+//		BarVisible = false
+//	} else {
+//		xproto.MapWindow(XGBConn, BarWindow)
+//		BarVisible = true
+//	}
+//}
