@@ -11,7 +11,13 @@ import (
 var BarWindow xproto.Window
 var XGBConn *xgb.Conn
 var RuntimeFlag = true
-var CurrentKeyMask BitFlags
+
+var masks = []uint16{
+	0,
+	xproto.ModMaskLock, // CapsLock
+	xproto.ModMask2,    // NumLock
+	xproto.ModMaskLock | xproto.ModMask2,
+}
 
 func main() {
 	var err error
@@ -40,12 +46,11 @@ func main() {
 		[]uint32{xproto.EventMaskExposure | xproto.EventMaskButtonPress |
 			xproto.EventMaskKeyPress | xproto.EventMaskKeyRelease})
 
-	for i := 0; i < len(Hotkeys); i++ {
-		Hotkeys[i].InitMask()
+	for _, hk := range Hotkeys {
+		for _, m := range masks {
+			xproto.GrabKey(XGBConn, false, root, hk.Modifier|m, hk.Key, xproto.GrabModeAsync, xproto.GrabModeAsync)
+		}
 	}
-	xproto.GrabKeyboard(XGBConn, true, root,
-		xproto.TimeCurrentTime,
-		xproto.GrabModeAsync, xproto.GrabModeAsync)
 
 	BarVisible = !BarVisible
 	ToggleBar(Args{})
@@ -62,26 +67,14 @@ func main() {
 
 		case xproto.KeyPressEvent:
 			fmt.Printf("Key pressed: keycode=%d\n", e.Detail)
-			// 00000001|10000000
-
-			CurrentKeyMask.Set(e.Detail)
 
 			for _, hk := range Hotkeys {
-				if CurrentKeyMask.And(hk.KeyMask) == hk.KeyMask {
+				if hk.Key == 0 && e.State&hk.Modifier == hk.Modifier {
+					hk.Action(hk.Arguments)
+				} else if e.Detail == xproto.Keycode(hk.Key) && e.State&hk.Modifier == hk.Modifier {
 					hk.Action(hk.Arguments)
 				}
 			}
-
-			//for _, hk := range Hotkeys {
-			//	if hk.Key == 0 && e.State&hk.Modifiers == hk.Modifiers {
-			//		hk.Action(hk.Arguments)
-			//	} else if e.Detail == xproto.Keycode(hk.Key) && e.State&hk.Modifiers == hk.Modifiers {
-			//		hk.Action(hk.Arguments)
-			//	}
-			//}
-		case xproto.KeyReleaseEvent:
-			//fmt.Printf("Key released: keycode=%d\n", e.Detail)
-			CurrentKeyMask.Clear(e.Detail)
 		}
 	}
 }

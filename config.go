@@ -6,8 +6,6 @@ import (
 	"github.com/jezek/xgb/xproto"
 )
 
-const MODKEY = xkeys.XK_Super_L
-
 // Interfase
 var (
 	BarVisible = true
@@ -25,10 +23,14 @@ var (
 	DeactiveBorderColor = HexToUint32("#585858ff")
 )
 
+const MODMASK = xproto.ModMask1
+
+/*
+ */
 var Hotkeys = []Hotkey{
-	{Keys: []xproto.Keycode{xkeys.XK_0}, Action: SayHello, Arguments: Args{}},
-	{Keys: []xproto.Keycode{MODKEY, xkeys.XK_q}, Action: Quit, Arguments: Args{}},
-	{Keys: []xproto.Keycode{xkeys.XK_q, xkeys.XK_w}, Action: ToggleBar, Arguments: Args{}},
+	{Modifier: MODMASK, Key: xkeys.XK_0, Action: SayHello, Arguments: Args{}},
+	{Modifier: MODMASK, Key: xkeys.XK_q, Action: Quit, Arguments: Args{}},
+	{Modifier: MODMASK, Key: xkeys.XK_1, Action: ToggleBar, Arguments: Args{}},
 	//{Key: 24, Modifiers: xproto.ModMask1, Action: func() { fmt.Println("Alt+Q") }},
 }
 
